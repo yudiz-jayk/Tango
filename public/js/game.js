@@ -1,3 +1,9 @@
+const symbolMap = {
+    0: '0',  // Will show as ☀️ through CSS
+    1: '1',  // Will show as 🌙 through CSS
+    null: ''
+};
+
 class BinaryPuzzleGame {
     constructor() {
         this.GRID_SIZE = 6;
@@ -30,32 +36,54 @@ class BinaryPuzzleGame {
         }
     }
 
+    applyConstraints() {
+        // Reset all constraints
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.classList.remove('constraint', 'constraint-horizontal', 'constraint-vertical', 'constraint-equals', 'constraint-opposite');
+            cell.removeAttribute('data-constraint');
+        });
+
+        if (!this.currentGame.constraints) return;
+
+        // Apply equals constraints
+        this.currentGame.constraints.equals.forEach(constraint => {
+            const { cells, direction } = constraint;
+            const firstCell = document.querySelector(
+                `.cell[data-row="${cells[0].row}"][data-col="${cells[0].col}"]`
+            );
+            
+            if (firstCell) {
+                firstCell.classList.add('constraint', `constraint-${direction}`, 'constraint-equals');
+                firstCell.setAttribute('data-constraint', '=');
+            }
+        });
+
+        // Apply opposite constraints
+        this.currentGame.constraints.opposite.forEach(constraint => {
+            const { cells, direction } = constraint;
+            const firstCell = document.querySelector(
+                `.cell[data-row="${cells[0].row}"][data-col="${cells[0].col}"]`
+            );
+            
+            if (firstCell) {
+                firstCell.classList.add('constraint', `constraint-${direction}`, 'constraint-opposite');
+                firstCell.setAttribute('data-constraint', '≠');
+            }
+        });
+    }
+
     renderGrid() {
         const gridElement = document.getElementById('grid');
         gridElement.innerHTML = '';
 
         this.currentGame.grid.forEach((row, i) => {
             row.forEach((cell, j) => {
-                const cellElement = document.createElement('div');
-                cellElement.className = 'cell';
-                
-                if (cell) {
-                    cellElement.className += ' filled';
-                    cellElement.textContent = cell === 'sun' ? '☀' : '☾';
-                }
-
-                if (!cell) {
-                    cellElement.addEventListener('click', () => this.handleCellClick(i, j));
-                }
-
-                const constraint = this.findConstraint(i, j);
-                if (constraint) {
-                    cellElement.className += ' constraint-horizontal ' + constraint;
-                }
-
+                const cellElement = createCell(this.currentGame.grid[i][j], i, j);
                 gridElement.appendChild(cellElement);
             });
         });
+
+        this.applyConstraints();
     }
 
     renderSolutionGrid() {
@@ -64,18 +92,13 @@ class BinaryPuzzleGame {
         
         this.currentGame.solution.forEach((row, i) => {
             row.forEach((cell, j) => {
-                const cellElement = document.createElement('div');
-                cellElement.className = 'cell filled';
-                cellElement.textContent = cell === 'sun' ? '☀' : '☾';
-                
-                const constraint = this.findConstraint(i, j);
-                if (constraint) {
-                    cellElement.className += ' constraint-horizontal ' + constraint;
-                }
-                
+                const cellElement = createCell(this.currentGame.solution[i][j], i, j);
                 solutionGrid.appendChild(cellElement);
             });
         });
+
+        // Apply constraints to solution grid as well
+        this.applyConstraints();
     }
 
     findConstraint(row, col) {
@@ -158,6 +181,37 @@ class BinaryPuzzleGame {
         const messageEl = document.getElementById('message');
         messageEl.style.display = 'none';
     }
+}
+
+function createCell(value, row, col) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    if (value !== null) {
+        cell.classList.add('filled');
+        cell.setAttribute('data-value', value);
+    }
+    cell.dataset.row = row;
+    cell.dataset.col = col;
+    
+    if (value === null) {
+        cell.addEventListener('click', () => {
+            const currentValue = cell.getAttribute('data-value');
+            let newValue;
+            if (!currentValue) {
+                newValue = '0';
+            } else if (currentValue === '0') {
+                newValue = '1';
+            } else {
+                newValue = '';
+                cell.removeAttribute('data-value');
+            }
+            if (newValue) {
+                cell.setAttribute('data-value', newValue);
+            }
+        });
+    }
+    
+    return cell;
 }
 
 // Initialize game when page loads

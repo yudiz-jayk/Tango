@@ -1,8 +1,15 @@
-const { generatePuzzle } = require('../common/servicies')
+ 
+const { generatePuzzle } = require('../common/servicies');
 
+ 
 const initializeGame = (difficulty = 'easy') => {
-    const gameData = generatePuzzle(difficulty)
-    return gameData
+    // Generate new game data
+    const gameData = generatePuzzle(difficulty);
+        
+       
+        
+ 
+    return gameData;
 }
 
 module.exports = {

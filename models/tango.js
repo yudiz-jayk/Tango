@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+const constraintPairSchema = new mongoose.Schema({
+    cells: [{
+        row: Number,
+        col: Number
+    }],
+    direction: {
+        type: String,
+        enum: ['horizontal', 'vertical']
+    }
+});
+
 const tangoSchema = new mongoose.Schema({
     puzzleNumber: {
         type: Number,
@@ -7,14 +18,8 @@ const tangoSchema = new mongoose.Schema({
     },
     grid: [[String]], // 6x6 grid with 'sun', 'moon', or null values
     constraints: {
-        equals: [{ // for = signs
-            row: Number,
-            col: Number
-        }],
-        opposite: [{ // for × signs
-            row: Number,
-            col: Number
-        }]
+        equals: [constraintPairSchema],    // for = signs
+        opposite: [constraintPairSchema],   // for ≠ signs
     },
     solution: [[String]], // 6x6 grid with complete solution
     difficulty: {
