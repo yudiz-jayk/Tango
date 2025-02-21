@@ -71,7 +71,7 @@ fastify.register(require('@fastify/cors'), {
 const start = async () => {
     try {
         await connectDB();
-        await fastify.listen({ port: process.env.PORT || 3000, host: '0.0.0.0' });
+        await fastify.listen({ port: process.env.PORT || 5003, host: '0.0.0.0' });
         fastify.log.info(`Server is running on ${fastify.server.address().port}`);
     } catch (err) {
         fastify.log.error(err);
