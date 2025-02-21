@@ -40,12 +40,32 @@ const getPossibleSymbols = (grid, row, col) => {
     const colCells = grid.map(r => r[col]).filter(Boolean);
 
     const maxPerLine = GRID_SIZE / 2;
+    
+    // Check row balance
+    const sunInRow = countSymbolsInArray(rowCells, 'sun');
+    const moonInRow = countSymbolsInArray(rowCells, 'moon');
+    const remainingInRow = GRID_SIZE - rowCells.length;
 
-    // Check existing row/column limits
-    if (countSymbolsInArray(rowCells, 'sun') > maxPerLine) symbols.splice(symbols.indexOf('sun'), 1);
-    if (countSymbolsInArray(rowCells, 'moon') > maxPerLine) symbols.splice(symbols.indexOf('moon'), 1);
-    if (countSymbolsInArray(colCells, 'sun') > maxPerLine) symbols.splice(symbols.indexOf('sun'), 1);
-    if (countSymbolsInArray(colCells, 'moon') > maxPerLine) symbols.splice(symbols.indexOf('moon'), 1);
+    // Check column balance
+    const sunInCol = countSymbolsInArray(colCells, 'sun');
+    const moonInCol = countSymbolsInArray(colCells, 'moon');
+    const remainingInCol = GRID_SIZE - colCells.length;
+
+    // Remove sun if:
+    // 1. Already at max in row/column OR
+    // 2. Adding sun would prevent moon from reaching required count
+    if (sunInRow >= maxPerLine || sunInCol >= maxPerLine || 
+        moonInCol + remainingInCol <= maxPerLine) {
+        symbols.splice(symbols.indexOf('sun'), 1);
+    }
+
+    // Remove moon if:
+    // 1. Already at max in row/column OR
+    // 2. Adding moon would prevent sun from reaching required count
+    if (moonInRow >= maxPerLine || moonInCol >= maxPerLine || 
+        sunInCol + remainingInCol <= maxPerLine) {
+        symbols.splice(symbols.indexOf('moon'), 1);
+    }
 
     // Check horizontal adjacency
     if (col >= 2 && grid[row][col-2] && grid[row][col-1] && 
@@ -73,26 +93,6 @@ const getPossibleSymbols = (grid, row, col) => {
 const generateSolution = () => {
     const solution = generateEmptyGrid();
     
-    const isValid = (grid, row, col, symbol) => {
-        // Check row balance
-        const rowSymbols = grid[row].filter(Boolean);
-        if (countSymbolsInArray(rowSymbols, symbol) >= GRID_SIZE / 2) return false;
-        
-        // Check column balance
-        const colSymbols = grid.map(r => r[col]).filter(Boolean);
-        if (countSymbolsInArray(colSymbols, symbol) >= GRID_SIZE / 2) return false;
-        
-        // Check horizontal adjacency
-        if (col >= 2 && grid[row][col-1] === symbol && grid[row][col-2] === symbol) return false;
-        if (col >= 1 && col < GRID_SIZE-1 && grid[row][col-1] === symbol && grid[row][col+1] === symbol) return false;
-        
-        // Check vertical adjacency
-        if (row >= 2 && grid[row-1][col] === symbol && grid[row-2][col] === symbol) return false;
-        if (row >= 1 && row < GRID_SIZE-1 && grid[row-1][col] === symbol && grid[row+1][col] === symbol) return false;
-        
-        return true;
-    };
-    
     const solve = (grid, position = 0) => {
         if (position === GRID_SIZE * GRID_SIZE) return true;
         
@@ -101,10 +101,8 @@ const generateSolution = () => {
         
         // Get valid symbols for this position
         const possibleSymbols = getPossibleSymbols(grid, row, col);
-
-
         
-        // Try each possible symbol
+        // Try each possible symbol (already validated)
         for (const symbol of shuffleArray(possibleSymbols)) {
             grid[row][col] = symbol;
             if (solve(grid, position + 1)) return true;
@@ -119,6 +117,31 @@ const generateSolution = () => {
     }
     
     return solution;
+};
+
+const isValid = (grid, row, col, symbol) => {
+    // Check row balance
+    const rowSymbols = grid[row].filter(Boolean);
+    const rowCount = countSymbolsInArray(rowSymbols, symbol);
+    if (rowCount >= GRID_SIZE / 2) return false;
+    
+    // Check column balance
+    const colSymbols = grid.map(r => r[col]).filter(Boolean);
+    const colCount = countSymbolsInArray(colSymbols, symbol);
+    const remainingCells = GRID_SIZE - colSymbols.length;
+    // If adding this symbol would make it impossible to achieve balance
+    if (colCount >= GRID_SIZE / 2 || 
+        (remainingCells + colCount < GRID_SIZE / 2)) return false;
+    
+    // Check horizontal adjacency
+    if (col >= 2 && grid[row][col-1] === symbol && grid[row][col-2] === symbol) return false;
+    if (col >= 1 && col < GRID_SIZE-1 && grid[row][col-1] === symbol && grid[row][col+1] === symbol) return false;
+    
+    // Check vertical adjacency
+    if (row >= 2 && grid[row-1][col] === symbol && grid[row-2][col] === symbol) return false;
+    if (row >= 1 && row < GRID_SIZE-1 && grid[row-1][col] === symbol && grid[row+1][col] === symbol) return false;
+    
+    return true;
 };
 
 const generateConstraints = (solution, difficulty = 'medium') => {
