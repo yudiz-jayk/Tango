@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Puzzle Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .controls {
+            margin: 20px;
+        }
+
+        .grid-container {
+            display: flex;
+            gap: 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .grid-wrapper {
+            text-align: center;
+        }
+
+        .grid-wrapper h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            background: white;
+            transition: background-color 0.2s;
+        }
+
+        .cell.filled {
+            background: #e8e8e8;
+            cursor: not-allowed;
+        }
+
+        .cell:hover:not(.filled) {
+            background: #f5f5f5;
+        }
+
+        .constraint-horizontal {
+            position: relative;
+        }
+
+        .constraint-horizontal::after {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .constraint-horizontal.equals::after {
+            content: "=";
+            color: blue;
+        }
+
+        .constraint-horizontal.opposite::after {
+            content: "≠";
+            color: red;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .difficulty-selector {
+            margin: 10px;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+
+        .solution-grid {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Binary Puzzle</h1>
+    
+    <div class="controls">
+        <div class="difficulty-selector">
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <button id="newGameBtn">New Game</button>
+        <button id="checkBtn">Check Solution</button>
+        <button id="showSolutionBtn">Show Solution</button>
+    </div>
+
+    <div class="grid-container">
+        <div class="grid-wrapper">
+            <h3>Your Progress</h3>
+            <div id="grid" class="grid"></div>
+        </div>
+        <div class="grid-wrapper" id="solutionWrapper" style="display: none;">
+            <h3>Solution</h3>
+            <div id="solutionGrid" class="grid solution-grid"></div>
+        </div>
+    </div>
+
+    <div id="message" class="message" style="display: none;"></div>
+
+    <script>
+        class BinaryPuzzleGame {
+            constructor() {
+                this.GRID_SIZE = 6;
+                this.SYMBOLS = ['sun', 'moon'];
+                this.currentGame = null;
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('newGameBtn').addEventListener('click', () => this.newGame());
+                document.getElementById('checkBtn').addEventListener('click', () => this.checkSolution());
+                document.getElementById('showSolutionBtn').addEventListener('click', () => this.showSolution());
+            }
+
+            async newGame() {
+                const difficulty = document.getElementById('difficulty').value;
+                try {
+                    const response = await fetch(`http://localhost:3000/api/game/new/${difficulty}`);
+                    this.currentGame = await response.json();
+                    this.renderGrid();
+                    
+                    // If solution is currently visible, update it as well
+                    const solutionWrapper = document.getElementById('solutionWrapper');
+                    if (solutionWrapper.style.display === 'block') {
+                        this.renderSolutionGrid();
+                    }
+                    
+                    this.hideMessage();
+                } catch (error) {
+                    this.showMessage('Failed to start new game', 'error');
+                }
+            }
+
+            renderGrid() {
+                const gridElement = document.getElementById('grid');
+                gridElement.innerHTML = '';
+
+                this.currentGame.grid.forEach((row, i) => {
+                    row.forEach((cell, j) => {
+                        const cellElement = document.createElement('div');
+                        cellElement.className = 'cell';
+                        
+                        if (cell) {
+                            cellElement.className += ' filled';
+                            cellElement.textContent = cell === 'sun' ? '☀' : '☾';
+                        }
+
+                        // Add click handler for empty cells
+                        if (!cell) {
+                            cellElement.addEventListener('click', () => this.handleCellClick(i, j));
+                        }
+
+                        // Check if this cell has a constraint with the next cell
+                        const constraint = this.findConstraint(i, j);
+                        if (constraint) {
+                            cellElement.className += ' constraint-horizontal ' + constraint;
+                        }
+
+                        gridElement.appendChild(cellElement);
+                    });
+                });
+            }
+
+            findConstraint(row, col) {
+                // Check equals constraints
+                const hasEquals = this.currentGame.constraints.equals.some(pair => {
+                    const [first, second] = pair;
+                    return first.row === row && first.col === col && second.col === col + 1;
+                });
+                if (hasEquals) return 'equals';
+
+                // Check opposite constraints
+                const hasOpposite = this.currentGame.constraints.opposite.some(pair => {
+                    const [first, second] = pair;
+                    return first.row === row && first.col === col && second.col === col + 1;
+                });
+                if (hasOpposite) return 'opposite';
+
+                return null;
+            }
+
+            handleCellClick(row, col) {
+                if (!this.currentGame.grid[row][col]) {
+                    this.currentGame.grid[row][col] = 'sun';
+                } else if (this.currentGame.grid[row][col] === 'sun') {
+                    this.currentGame.grid[row][col] = 'moon';
+                } else {
+                    this.currentGame.grid[row][col] = null;
+                }
+                this.renderGrid();
+            }
+
+            checkSolution() {
+                if (!this.currentGame) return;
+
+                const isComplete = this.currentGame.grid.every(row => 
+                    row.every(cell => cell !== null)
+                );
+
+                if (!isComplete) {
+                    this.showMessage('Please fill all cells before checking', 'error');
+                    return;
+                }
+
+                const isCorrect = JSON.stringify(this.currentGame.grid) === 
+                                JSON.stringify(this.currentGame.solution);
+                
+                this.showMessage(
+                    isCorrect ? 'Congratulations! Puzzle solved correctly!' : 'Solution is not correct. Keep trying!',
+                    isCorrect ? 'success' : 'error'
+                );
+            }
+
+            renderSolutionGrid() {
+                const solutionGrid = document.getElementById('solutionGrid');
+                solutionGrid.innerHTML = '';
+                
+                this.currentGame.solution.forEach((row, i) => {
+                    row.forEach((cell, j) => {
+                        const cellElement = document.createElement('div');
+                        cellElement.className = 'cell filled';
+                        cellElement.textContent = cell === 'sun' ? '☀' : '☾';
+                        
+                        // Add constraint if exists
+                        const constraint = this.findConstraint(i, j);
+                        if (constraint) {
+                            cellElement.className += ' constraint-horizontal ' + constraint;
+                        }
+                        
+                        solutionGrid.appendChild(cellElement);
+                    });
+                });
+            }
+
+            showSolution() {
+                if (!this.currentGame || !this.currentGame.solution) return;
+                
+                // Show the solution wrapper
+                document.getElementById('solutionWrapper').style.display = 'block';
+                
+                // Render the solution grid
+                this.renderSolutionGrid();
+                
+                // Change button text
+                const solutionBtn = document.getElementById('showSolutionBtn');
+                solutionBtn.textContent = 'Hide Solution';
+                solutionBtn.removeEventListener('click', () => this.showSolution());
+                solutionBtn.addEventListener('click', () => this.hideSolution());
+            }
+
+            hideSolution() {
+                // Hide the solution wrapper
+                document.getElementById('solutionWrapper').style.display = 'none';
+                
+                // Restore button text and functionality
+                const solutionBtn = document.getElementById('showSolutionBtn');
+                solutionBtn.textContent = 'Show Solution';
+                solutionBtn.removeEventListener('click', () => this.hideSolution());
+                solutionBtn.addEventListener('click', () => this.showSolution());
+            }
+
+            showMessage(text, type) {
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = text;
+                messageEl.className = `message ${type}`;
+                messageEl.style.display = 'block';
+            }
+
+            hideMessage() {
+                const messageEl = document.getElementById('message');
+                messageEl.style.display = 'none';
+            }
+        }
+
+        // Initialize game when page loads
+        window.onload = () => {
+            const game = new BinaryPuzzleGame();
+            game.newGame();
+        };
+    </script>
+</body>
+</html> 

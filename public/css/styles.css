@@ -1,0 +1,118 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+}
+
+.controls {
+    margin: 20px;
+}
+
+.grid-container {
+    display: flex;
+    gap: 40px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.grid-wrapper {
+    text-align: center;
+}
+
+.grid-wrapper h3 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    margin-bottom: 20px;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    background: white;
+    transition: background-color 0.2s;
+}
+
+.cell.filled {
+    background: #e8e8e8;
+    cursor: not-allowed;
+}
+
+.cell:hover:not(.filled) {
+    background: #f5f5f5;
+}
+
+.constraint-horizontal {
+    position: relative;
+}
+
+.constraint-horizontal::after {
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.constraint-horizontal.equals::after {
+    content: "=";
+    color: blue;
+}
+
+.constraint-horizontal.opposite::after {
+    content: "≠";
+    color: red;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.difficulty-selector {
+    margin: 10px;
+}
+
+.message {
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.success {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+.error {
+    background-color: #f2dede;
+    color: #a94442;
+}
+
+.solution-grid {
+    opacity: 0.8;
+} 

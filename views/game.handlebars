@@ -1,0 +1,28 @@
+<h1>Binary Puzzle</h1>
+
+<div class="controls">
+    <div class="difficulty-selector">
+        <label for="difficulty">Difficulty:</label>
+        <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+    <button id="newGameBtn">New Game</button>
+    <button id="checkBtn">Check Solution</button>
+    <button id="showSolutionBtn">Show Solution</button>
+</div>
+
+<div class="grid-container">
+    <div class="grid-wrapper">
+        <h3>Your Progress</h3>
+        <div id="grid" class="grid"></div>
+    </div>
+    <div class="grid-wrapper" id="solutionWrapper" style="display: none;">
+        <h3>Solution</h3>
+        <div id="solutionGrid" class="grid solution-grid"></div>
+    </div>
+</div>
+
+<div id="message" class="message" style="display: none;"></div> 
