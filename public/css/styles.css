@@ -31,10 +31,11 @@ body {
 .grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 5px;
+    gap: 8px;
     margin-bottom: 20px;
-    padding: 15px 25px 25px 15px;
+    padding: 15px 35px 35px 15px;
     position: relative;
+    background: white;
 }
 
 .cell {
@@ -49,6 +50,7 @@ body {
     background: white;
     transition: background-color 0.2s;
     position: relative;
+    margin: 2px;
 }
 
 .cell.filled {
@@ -75,35 +77,34 @@ body {
 .constraint-horizontal::after {
     content: attr(data-constraint);
     position: absolute;
-    right: -18px;
+    right: -16px;
     top: 50%;
     transform: translateY(-50%);
-    z-index: 2;
+    z-index: 5;
     font-weight: bold;
     font-size: 20px;
-    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
     width: 16px;
     text-align: center;
-    background: rgba(255,255,255,0.8);
-    padding: 2px;
-    border-radius: 3px;
+    background: white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.1);
+    padding: 0;
+    line-height: 1;
 }
 
 .constraint-vertical::after {
     content: attr(data-constraint);
     position: absolute;
-    bottom: -18px;
+    bottom: -16px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 2;
+    z-index: 5;
     font-weight: bold;
     font-size: 20px;
-    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
     height: 16px;
     line-height: 16px;
-    background: rgba(255,255,255,0.8);
-    padding: 2px;
-    border-radius: 3px;
+    background: white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.1);
+    padding: 0;
 }
 
 .constraint-equals::after {
@@ -114,6 +115,23 @@ body {
 .constraint-opposite::after {
     color: #F44336;
     content: "≠";
+}
+
+.cell.constraint {
+    overflow: visible;
+}
+
+.cell.constraint::after {
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.cell:last-child .constraint-horizontal::after {
+    right: -14px;
+}
+
+.cell:last-of-type .constraint-vertical::after {
+    bottom: -14px;
 }
 
 button {
