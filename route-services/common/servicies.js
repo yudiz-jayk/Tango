@@ -110,16 +110,16 @@ function generateConstraints(solution, difficulty) {
   // Adjust constraints based on difficulty
   if (difficulty === 'easy') {
     // Easy: 1 constraint of each type
-    if (shuffledEquals.length > 0) constraints.equals.push(shuffledEquals[0]);
-    if (shuffledOpposites.length > 0) constraints.opposite.push(shuffledOpposites[0]);
+    if (shuffledEquals.length > 0) constraints.equals.push(...shuffledEquals.slice(0, 1));
+    if (shuffledOpposites.length > 0) constraints.opposite.push(...shuffledOpposites.slice(0, 1));
   } else if (difficulty === 'medium') {
     // Medium: 2 constraints of each type
-    if (shuffledEquals.length > 1) constraints.equals.push(...shuffledEquals.slice(0, 2));
-    if (shuffledOpposites.length > 1) constraints.opposite.push(...shuffledOpposites.slice(0, 2));
+    if (shuffledEquals.length > 1) constraints.equals.push(...shuffledEquals.slice(0, 1));
+    if (shuffledOpposites.length > 1) constraints.opposite.push(...shuffledOpposites.slice(0, 1));
   } else if (difficulty === 'hard') {
     // Hard: 3 constraints of each type
-    if (shuffledEquals.length > 2) constraints.equals.push(...shuffledEquals.slice(0, 3));
-    if (shuffledOpposites.length > 2) constraints.opposite.push(...shuffledOpposites.slice(0, 3));
+    if (shuffledEquals.length > 2) constraints.equals.push(...shuffledEquals.slice(0, 1));
+    if (shuffledOpposites.length > 2) constraints.opposite.push(...shuffledOpposites.slice(0, 1));
   }
   
   return constraints;
