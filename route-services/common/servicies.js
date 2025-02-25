@@ -61,9 +61,9 @@ function generateSolution() {
   return grid;
 }
 
-// --- 2. Generate exactly two constraints from the solution ---
-// We extract one equals constraint and one opposite constraint
-function generateConstraints(solution) {
+// --- 2. Generate constraints from the solution ---
+// We extract constraints based on difficulty level
+function generateConstraints(solution, difficulty) {
   const equalConstraints = [];
   const oppositeConstraints = [];
   
@@ -106,11 +106,22 @@ function generateConstraints(solution) {
   const shuffledOpposites = oppositeConstraints.sort(() => Math.random() - 0.5);
   
   const constraints = { equals: [], opposite: [] };
-  // Add one constraint of each type (if available)
-  if (shuffledEquals.length > 0 && shuffledOpposites.length > 0) {
-    constraints.equals.push(shuffledEquals[0]);
-    constraints.opposite.push(shuffledOpposites[0]);
+  
+  // Adjust constraints based on difficulty
+  if (difficulty === 'easy') {
+    // Easy: 1 constraint of each type
+    if (shuffledEquals.length > 0) constraints.equals.push(shuffledEquals[0]);
+    if (shuffledOpposites.length > 0) constraints.opposite.push(shuffledOpposites[0]);
+  } else if (difficulty === 'medium') {
+    // Medium: 2 constraints of each type
+    if (shuffledEquals.length > 1) constraints.equals.push(...shuffledEquals.slice(0, 2));
+    if (shuffledOpposites.length > 1) constraints.opposite.push(...shuffledOpposites.slice(0, 2));
+  } else if (difficulty === 'hard') {
+    // Hard: 3 constraints of each type
+    if (shuffledEquals.length > 2) constraints.equals.push(...shuffledEquals.slice(0, 3));
+    if (shuffledOpposites.length > 2) constraints.opposite.push(...shuffledOpposites.slice(0, 3));
   }
+  
   return constraints;
 }
 
@@ -223,7 +234,7 @@ function solveLogically(puzzle) {
   return { solvedGrid: grid, complete };
 }
 
-// --- 4. Reduce clues to exactly 8 filled cells while ensuring logical solvability ---
+// --- 4. Reduce clues to a target number while ensuring logical solvability ---
 // Start with the full solution and remove cells one by one. After each removal,
 // use the deduction solver to verify that the puzzle can still be completed logically.
 function reduceClues(solution, constraints, targetClues) {
@@ -259,21 +270,31 @@ function reduceClues(solution, constraints, targetClues) {
 }
 
 // --- 5. Generate final puzzle ---
-// Combines all pieces: a full solution, exactly two constraints, and exactly 8 prefilled clues.
-function generatePuzzle() {
+// Combines all pieces: a full solution, constraints, and prefilled clues based on difficulty.
+function generatePuzzle(difficulty = 'medium') {
   const solution = generateSolution();
-  const constraints = generateConstraints(solution);
-  const grid = reduceClues(solution, constraints, 8);
+  const constraints = generateConstraints(solution, difficulty);
+  
+  // Adjust target clues based on difficulty
+  let targetClues;
+  if (difficulty === 'easy') {
+    targetClues = 12; // More clues for easier puzzles
+  } else if (difficulty === 'medium') {
+    targetClues = 8; // Moderate clues for medium puzzles
+  } else if (difficulty === 'hard') {
+    targetClues = 4; // Fewer clues for harder puzzles
+  }
+  
+  const grid = reduceClues(solution, constraints, targetClues);
   
   return {
-    grid,         // Puzzle grid with exactly 8 default clues
+    grid,         // Puzzle grid with prefilled clues
     solution,     // Full solution grid
-    constraints,  // Exactly 2 constraints (one equals and one opposite)
-    difficulty: 'logical'
+    constraints,  // Constraints based on difficulty
+    difficulty    // Difficulty level
   };
 }
 
-
 module.exports = {
   generatePuzzle
-}
+};
